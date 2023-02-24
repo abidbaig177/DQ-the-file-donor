@@ -47,17 +47,25 @@ class temp(object):
     SETTINGS = {}
 
 async def is_subscribed(bot, query):
-    try:
-        user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-    except UserNotParticipant:
-        pass
-    except Exception as e:
-        logger.exception(e)
+    if not FORCE_SUB_CHANNEL:
+        return True
+    user_id = update.from_user.id
+    if user_id in ADMINS:
+        return True
+    user = await Fsub_DB().get_user(str(user_id))
+    if user:
+        return True
     else:
-        if user.status != enums.ChatMemberStatus.BANNED:
-            return True
+        pass
+    try:
+        member = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL, user_id = user_id)
+    except UserNotParticipant:
+        return False
 
-    return False
+    if not member.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+        return False
+    else:
+        return True
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
